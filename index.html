@@ -1,0 +1,1869 @@
+﻿<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Η Πρόταση Γάμου | Εργαστήριο Σκηνής 3.0</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #120e0a;
+            font-family: 'Georgia', serif;
+            color: #f4ecd8;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        .header-box {
+            background: linear-gradient(135deg, rgba(32, 24, 18, 0.92), rgba(20, 15, 11, 0.85));
+            border-left: 4px solid #d4af37;
+            padding: 12px 22px;
+            max-width: 460px;
+            pointer-events: auto;
+            border-radius: 4px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        }
+        .header-box h1 {
+            margin: 0 0 4px 0;
+            font-size: 1.35rem;
+            color: #f0d080;
+            letter-spacing: 0.5px;
+        }
+        .header-box p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: #cbbba0;
+            font-style: italic;
+        }
+        .controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 20, 15, 0.9);
+            border: 1px solid #6b533b;
+            padding: 16px;
+            border-radius: 6px;
+            pointer-events: auto;
+            width: 270px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        }
+        .controls-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            color: #f0d080;
+            border-bottom: 1px solid #5a4632;
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #dfd1bc;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: #d4af37;
+            cursor: pointer;
+        }
+        .cam-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        button {
+            background: #3a2b20;
+            color: #f4ecd8;
+            border: 1px solid #85684a;
+            padding: 7px 10px;
+            font-family: 'Georgia', serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #594331;
+            border-color: #d4af37;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .water-btn {
+            width: 100%;
+            background: #234252;
+            border-color: #5ca4c7;
+            font-weight: bold;
+            padding: 9px;
+        }
+        .water-btn:hover {
+            background: #2e596e;
+            border-color: #8ad4f5;
+        }
+        .dialogue-container {
+            align-self: center;
+            background: linear-gradient(to bottom, rgba(24, 18, 14, 0.95), rgba(15, 11, 8, 0.97));
+            border: 1px solid #9c7d50;
+            border-top: 3px solid #d4af37;
+            border-radius: 6px;
+            padding: 18px 28px;
+            max-width: 820px;
+            width: 88%;
+            pointer-events: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+        }
+        .speaker-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #f0d080;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+        .stage-direction {
+            font-size: 0.9rem;
+            color: #b8a68e;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+        .dialogue-text {
+            font-size: 1.12rem;
+            line-height: 1.55;
+            color: #fff9ee;
+            min-height: 3.4em;
+        }
+        .dialogue-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            border-top: 1px solid #3d3126;
+            padding-top: 10px;
+        }
+        .step-counter {
+            font-size: 0.85rem;
+            color: #a3937d;
+        }
+        .nav-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .nav-btns button {
+            padding: 8px 18px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .pulse-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #ff3344;
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 8px #ff3344;
+            animation: pulse 0.8s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.45); opacity: 0.55; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+
+        /* Εργαστήριο σκηνής: αυτοτελές επίπεδο χειρισμού */
+        .workshop-panel {
+            position: absolute; left: 20px; top: 115px;
+            width: 302px; max-height: calc(100vh - 360px);
+            overflow-y: auto; background: rgba(23, 29, 31, .94);
+            border: 1px solid #557d79; border-radius: 8px;
+            padding: 13px 15px; pointer-events: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,.58);
+        }
+        .workshop-panel h3 { margin: 0 0 8px; color: #b7e1d9; font-size: .96rem; }
+        .workshop-panel p { margin: 7px 0; font-size: .78rem; line-height: 1.42; color: #e4dfd6; }
+        .workshop-panel label { font-size: .8rem; display:block; margin-top: 8px; color:#e4dfd6; }
+        .workshop-panel button { padding: 8px 9px; min-height: 38px; line-height: 1.2; }
+        .workshop-row { display: flex; gap: 6px; margin: 8px 0; }
+        .workshop-row button { flex:1; }
+        .workshop-panel button.active { background:#21594e; border-color:#7ac4ac; color:#fff; }
+        .workshop-panel .accent { background:#21594e; border-color:#7ac4ac; }
+        .workshop-panel .danger { background:#603b32; border-color:#9d7770; }
+        #workshop-tools[hidden] { display:none !important; }
+        #workshop-status { background:#24373a; border-radius:4px; padding:7px 9px; min-height:2.1em; }
+        #workshop-steps { max-height:85px; overflow:auto; padding-left:18px; margin: 5px 0;
+            font-size:.77rem; color:#d4ede2; }
+        #workshop-steps li { padding:2px 0; }
+        .dialogue-container { position:relative; z-index:2; }
+        @media(max-width:800px) {
+            #ui-layer { padding:8px; }
+            .header-box { max-width:47%; padding:8px; }
+            .header-box h1 { font-size: 1rem; }
+            .controls-panel { top:8px; right:8px; width:40%; padding:9px; }
+            .workshop-panel { top:94px; left:8px; width:45%; max-height:44vh; padding:8px; }
+            .dialogue-container { width:94%; padding:9px 11px; max-height:29vh; overflow:auto; }
+            .dialogue-text { font-size:.92rem; min-height:0; }
+            .dialogue-footer { gap:5px; flex-wrap:wrap; }
+        }
+
+
+.workshop-panel select { box-sizing:border-box; width:100%; padding:9px; min-height:40px; color:#f4ecd8; background:#263e3c; border:1px solid #79b4a5; border-radius:5px; font: .85rem Georgia,serif; }
+        .workshop-camera-list {display:flex; flex-wrap:wrap; gap:5px; margin:7px 0;}
+        .workshop-camera-list button {flex:1 1 85px; background:#284943; border-color:#80bbaa;}
+        .workshop-panel input[type=file] {max-width:100%; color:#f4ecd8; font-size:.8rem;}
+        @media (prefers-reduced-motion: reduce) { .pulse-indicator { animation:none!important; } button {transition:none!important;} }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+
+<div id="canvas-container"></div>
+
+
+<div id="ui-layer">
+    <div class="header-box">
+        <h1>Η Πρόταση Γάμου — ΣΚΗΝΗ 1</h1>
+        <p>Στη σκηνή: Λόμοφ, Τσουμπούκοφ</p>
+    </div>
+
+
+    <div class="controls-panel">
+        <h3>Σκηνοθετική Κονσόλα</h3>
+        <div class="control-group">
+            <label><span class="pulse-indicator" id="heart-dot"></span>Ταραχή & Παλμοί Λόμοφ: <span id="anxiety-val">35%</span></label>
+            <input type="range" id="anxiety-slider" min="10" max="100" value="35">
+        </div>
+        <div class="control-group">
+            <label>Κάμερες Σκηνής:</label>
+            <div class="cam-buttons">
+                <button onclick="setCameraView('wide')">Γενικό Πλάνο</button>
+                <button onclick="setCameraView('center')">Κοντινό Δυάδας</button>
+                <button onclick="setCameraView('lomov')">Πλάνο Λόμοφ</button>
+                <button onclick="setCameraView('chubukov')">Πλάνο Τσουμπούκοφ</button>
+                <button onclick="setCameraView('top')">Κάτοψη από ψηλά</button>
+            </div>
+        </div>
+        <div class="control-group" style="margin-bottom:0;">
+            <button class="water-btn" onclick="triggerDrinkWater()">💧 Δώσε νερό στον Λόμοφ!</button>
+        </div>
+    </div>
+
+
+
+
+    <div class="workshop-panel" aria-label="Εργαστήριο σκηνής">
+        <h3>🎭 Εργαστήριο Σκηνής 3.0</h3>
+        <p>Δες τη σκηνή ή δοκίμασε τη δική σου σκηνοθεσία.</p>
+        <div class="workshop-row">
+            <button type="button" id="watch-mode-btn" class="active" onclick="setWorkshopMode('watch')">▶ Παρακολούθηση</button>
+            <button type="button" id="explore-mode-btn" onclick="setWorkshopMode('explore')">✦ Εξερεύνηση</button>
+        </div>
+        <div id="workshop-tools" hidden>
+            <label>Ποιο πρόσωπο μετακινώ;</label>
+            <div class="workshop-row">
+                <button id="select-lomov" type="button" class="active" onclick="selectWorkshopActor('lomov')">Λόμοφ</button>
+                <button id="select-chubukov" type="button" onclick="selectWorkshopActor('chubukov')">Τσουμπούκοφ</button>
+            </div>
+            <label>Τι κάνει το ποντίκι;</label>
+            <div class="workshop-row">
+                <button id="camera-tool" type="button" class="active" onclick="setWorkshopTool('camera')">🖱 Περιήγηση</button>
+                <button id="move-tool" type="button" onclick="setWorkshopTool('move')">✥ Μετακίνηση</button>
+            </div>
+            <p>Με «Μετακίνηση» πάτησε ή σύρε στο πάτωμα της σκηνής. Με «Περιήγηση» γύρισε την κάμερα όπως πριν.</p>
+            <label>Μικρά βήματα χωρίς σύρσιμο</label>
+            <div class="workshop-row">
+                <button type="button" onclick="nudgeWorkshopActor(0,-0.35)">↑ Μπροστά</button>
+                <button type="button" onclick="nudgeWorkshopActor(0,0.35)">↓ Πίσω</button>
+            </div>
+            <div class="workshop-row">
+                <button type="button" onclick="nudgeWorkshopActor(-0.35,0)">← Αριστερά</button>
+                <button type="button" onclick="nudgeWorkshopActor(0.35,0)">→ Δεξιά</button>
+            </div>
+            <label>Πού στρέφεται το πρόσωπο;</label>
+            <div class="workshop-row">
+                <button type="button" onclick="rotateWorkshopActor(-15)">↶ 15°</button>
+                <button type="button" onclick="rotateWorkshopActor(15)">15° ↷</button>
+                <button type="button" onclick="resetWorkshopPose()">Επαναφορά</button>
+            </div>
+            <label for="workshop-action">3. Τι κάνει το πρόσωπο;</label>
+            <select id="workshop-action" aria-label="Σκηνική ενέργεια" onchange="setWorkshopAction(this.value)">
+                <option value="text">Όπως στο κείμενο</option>
+                <option value="idle">Στέκεται ακίνητο</option>
+                <option value="approach">Πλησιάζει τον άλλον</option>
+                <option value="retreat">Απομακρύνεται</option>
+                <option value="reach">Απλώνει το χέρι</option>
+                <option value="greet">Χαιρετά</option>
+                <option value="sit">Κάθεται</option>
+                <option value="look">Στρέφεται προς τον άλλον</option>
+            </select>
+            <p>Δοκίμασε να αλλάξεις την κίνηση και τη σχέση των προσώπων.</p>
+            <label>4. Φτιάξε το δικό σου πλάνο</label>
+            <div class="workshop-row">
+                <button type="button" onclick="setCameraView('top')">⬇ Κάτοψη</button>
+                <button type="button" onclick="saveWorkshopCamera()">＋ Κράτησε αυτή τη γωνία</button>
+            </div>
+            <p>Γύρισε την κάμερα με το ποντίκι και κράτησε το πλάνο που σου αρέσει.</p>
+            <div id="workshop-cameras" class="workshop-camera-list"></div>
+            <label>5. Οι δικές μου σκηνικές στιγμές</label>
+            <div class="workshop-row">
+                <button type="button" class="accent" onclick="recordWorkshopStep()">＋ Κράτησε τη στιγμή</button>
+                <button type="button" class="accent" onclick="playWorkshopSteps()">▶ Δες τη σκηνή μου</button>
+            </div>
+            <div class="workshop-row">
+                <button type="button" onclick="exportWorkshopSteps()">↓ Αποθήκευσε τη σκηνή μου</button>
+                <button type="button" class="danger" onclick="clearWorkshopSteps()">Καθαρισμός</button>
+            </div>
+            <label for="workshop-import">Άνοιξε μια σκηνή που είχες αποθηκεύσει</label>
+            <input id="workshop-import" type="file" accept=".json,application/json" style="max-width:100%; font-size:.76rem; margin-top:4px">
+            <ol id="workshop-steps" aria-label="Καταγεγραμμένες σκηνικές στιγμές"></ol>
+            <p><strong>Απλά:</strong> «Αποθήκευσε» φυλάει τη δουλειά σου σε ένα αρχείο. «Άνοιξε» τη φέρνει πίσω. Δεν χρειάζεται να γνωρίζεις τον τύπο του αρχείου.</p>
+            <p id="workshop-status" role="status" aria-live="polite">Επίλεξε πρόσωπο και δοκίμασε μια θέση.</p>
+        </div>
+    </div>
+
+
+    <div class="dialogue-container">
+        <div class="speaker-name" id="speaker">ΤΣΟΥΜΠΟΥΚΟΦ</div>
+        <div class="stage-direction" id="direction">[Μπαίνει ο Λόμοφ. Φορά φράκο και λευκά γάντια. Ο Τσουμπούκοφ σηκώνεται για να τον υποδεχτεί.]</div>
+        <div class="dialogue-text" id="dialogue"></div>
+        <div class="dialogue-footer">
+            <span class="step-counter" id="step-info">Σκηνή 1 — Ατάκα 1 / 15</span>
+            <div class="nav-btns">
+                <button onclick="prevLine()">◀ Προηγούμενη</button>
+                <button onclick="nextLine()" style="background:#7a5428; border-color:#d4af37;">Επόμενη Ατάκα ▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+    // --- 1. ΡΥΘΜΙΣΗ ΣΚΗΝΗΣ & ΑΝΑΒΑΘΜΙΣΜΕΝΟΥ RENDERER ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x16110d);
+    scene.fog = new THREE.FogExp2(0x16110d, 0.022);
+
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 3.6, 9.2);
+
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    container.appendChild(renderer.domElement);
+
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.5, 0);
+    controls.maxPolarAngle = Math.PI / 2 - 0.03;
+    controls.minDistance = 2.2;
+    controls.maxDistance = 15;
+    controls.enableDamping = true;
+
+
+    // --- 2. PROCEDURAL TEXTURES ΓΙΑ ΠΛΟΥΣΙΑ ΓΡΑΦΙΚΑ ---
+    function createWoodTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#4a2f1d';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.strokeStyle = '#382214';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 60; i++) {
+            ctx.beginPath();
+            const y = Math.random() * 512;
+            ctx.moveTo(0, y);
+            ctx.bezierCurveTo(170, y + (Math.random() - 0.5) * 30, 340, y + (Math.random() - 0.5) * 30, 512, y);
+            ctx.stroke();
+        }
+        // Χωρίσματα σανίδων παρκέ
+        ctx.strokeStyle = '#24150b';
+        ctx.lineWidth = 2;
+        for (let y = 0; y < 512; y += 64) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(4, 3);
+        return tex;
+    }
+
+
+    function createWallpaperTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#5c4332';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#694e3b';
+        for (let x = 0; x < 256; x += 32) {
+            ctx.fillRect(x, 0, 14, 256);
+        }
+        ctx.fillStyle = '#785a44';
+        for (let x = 16; x < 256; x += 32) {
+            for (let y = 16; y < 256; y += 32) {
+                ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(6, 3);
+        return tex;
+    }
+
+
+    function createRugTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#6e1e1e';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.strokeStyle = '#c89d54';
+        ctx.lineWidth = 18;
+        ctx.strokeRect(24, 24, 464, 464);
+        ctx.strokeStyle = '#2b1111';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(48, 48, 416, 416);
+        // Κεντρικό μενταγιόν χαλιού
+        ctx.fillStyle = '#8c2d2d';
+        ctx.beginPath();
+        ctx.ellipse(256, 256, 140, 90, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        return new THREE.CanvasTexture(canvas);
+    }
+
+
+    // --- 3. ΦΩΤΙΣΜΟΣ ---
+    const ambientLight = new THREE.AmbientLight(0xffe8cc, 0.55);
+    scene.add(ambientLight);
+
+
+    const chandelierLight = new THREE.PointLight(0xffaa44, 2.2, 20);
+    chandelierLight.position.set(0, 4.7, 0);
+    chandelierLight.castShadow = true;
+    chandelierLight.shadow.mapSize.width = 2048;
+    chandelierLight.shadow.mapSize.height = 2048;
+    chandelierLight.shadow.bias = -0.001;
+    scene.add(chandelierLight);
+
+
+    const sunLight = new THREE.DirectionalLight(0xe8f4ff, 1.6);
+    sunLight.position.set(-1.5, 6.5, -9);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    scene.add(sunLight);
+
+
+    // Θεατρικά φώτα ράμπας (από μπροστά)
+    const footLight = new THREE.SpotLight(0xffd2a6, 0.9);
+    footLight.position.set(0, 1.5, 6);
+    scene.add(footLight);
+
+
+    // --- 4. ΣΚΗΝΟΓΡΑΦΙΑ: ΤΟ ΑΡΧΟΝΤΙΚΟ ΤΟΥ ΤΣΟΥΜΠΟΥΚΟΦ ---
+    const roomGroup = new THREE.Group();
+    scene.add(roomGroup);
+
+
+    // Παρκέ Πάτωμα
+    const floorMat = new THREE.MeshStandardMaterial({
+        map: createWoodTexture(),
+        roughness: 0.45,
+        metalness: 0.05
+    });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(15, 11), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    roomGroup.add(floor);
+
+
+    // Περσικό Χαλί
+    const rugMat = new THREE.MeshStandardMaterial({
+        map: createRugTexture(),
+        roughness: 0.85
+    });
+    const rug = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 5.0), rugMat);
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.y = 0.01;
+    rug.receiveShadow = true;
+    roomGroup.add(rug);
+
+
+    // Τοίχοι με ταπετσαρία εποχής και ξύλινο σοβατεπί (wainscoting)
+    const wallMat = new THREE.MeshStandardMaterial({ map: createWallpaperTexture(), roughness: 0.85 });
+    const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x2e1c10, roughness: 0.4 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.7 });
+
+
+    const leftBackWall = new THREE.Mesh(new THREE.BoxGeometry(5.2, 6, 0.3), wallMat);
+    leftBackWall.position.set(-4.6, 3, -5);
+    leftBackWall.receiveShadow = true;
+    roomGroup.add(leftBackWall);
+
+
+    const rightBackWall = new THREE.Mesh(new THREE.BoxGeometry(5.2, 6, 0.3), wallMat);
+    rightBackWall.position.set(4.6, 3, -5);
+    rightBackWall.receiveShadow = true;
+    roomGroup.add(rightBackWall);
+
+
+    const topBackWall = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 0.3), wallMat);
+    topBackWall.position.set(0, 5.25, -5);
+    roomGroup.add(topBackWall);
+
+
+    const bottomBackWall = new THREE.Mesh(new THREE.BoxGeometry(4, 1.4, 0.3), wallMat);
+    bottomBackWall.position.set(0, 0.7, -5);
+    roomGroup.add(bottomBackWall);
+
+
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 6, 11), wallMat);
+    leftWall.position.set(-7.2, 3, 0);
+    leftWall.receiveShadow = true;
+    roomGroup.add(leftWall);
+
+
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 6, 11), wallMat);
+    rightWall.position.set(7.2, 3, 0);
+    rightWall.receiveShadow = true;
+    roomGroup.add(rightWall);
+
+
+    // Σοβατεπί (Ξύλινη επένδυση χαμηλά στους τοίχους)
+    const wainscotBackL = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.2, 0.36), darkWoodMat);
+    wainscotBackL.position.set(-4.6, 0.6, -5);
+    roomGroup.add(wainscotBackL);
+    const wainscotBackR = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.2, 0.36), darkWoodMat);
+    wainscotBackR.position.set(4.6, 0.6, -5);
+    roomGroup.add(wainscotBackR);
+
+
+    // Πόρτα στα Δεξιά (απ' όπου βγαίνει ο Τσουμπούκοφ για να φωνάξει τη Νατάσα)
+    const doorGroup = new THREE.Group();
+    doorGroup.position.set(7.02, 0, 1.2);
+    roomGroup.add(doorGroup);
+    const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.15, 3.6, 1.9), darkWoodMat);
+    doorFrame.position.y = 1.8;
+    doorGroup.add(doorFrame);
+    const doorPanel = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.4, 1.6), new THREE.MeshStandardMaterial({ color: 0x422817, roughness: 0.5 }));
+    doorPanel.position.y = 1.7;
+    doorGroup.add(doorPanel);
+    const doorKnob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), goldMat);
+    doorKnob.position.set(-0.12, 1.5, -0.55);
+    doorGroup.add(doorKnob);
+
+
+    // Εξωτερικό Τοπίο (Ουρανός, Λόφοι και Δέντρα στα Λιβάδια)
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), new THREE.MeshBasicMaterial({ color: 0x9ad0ec }));
+    sky.position.set(0, 4.5, -9.5);
+    roomGroup.add(sky);
+
+
+    const meadow = new THREE.Mesh(new THREE.PlaneGeometry(20, 5), new THREE.MeshBasicMaterial({ color: 0x5d9438 }));
+    meadow.position.set(0, 1.2, -9.4);
+    roomGroup.add(meadow);
+
+
+    // Τρισδιάστατα Δέντρα (Σημύδες) έξω από το παράθυρο
+    for (let i = -3.5; i <= 3.5; i += 2.2) {
+        const treeGroup = new THREE.Group();
+        treeGroup.position.set(i + (Math.random() - 0.5), 0.5, -7.2 - Math.random() * 1.5);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 2.5, 8), new THREE.MeshBasicMaterial({ color: 0xeae6df }));
+        trunk.position.y = 1.25;
+        treeGroup.add(trunk);
+        const foliage = new THREE.Mesh(new THREE.SphereGeometry(0.75, 12, 12), new THREE.MeshBasicMaterial({ color: 0x457d26 }));
+        foliage.position.y = 2.6;
+        treeGroup.add(foliage);
+        roomGroup.add(treeGroup);
+    }
+
+
+    // Παράθυρο & Βελούδινες Κουρτίνες
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0xeae0d0, roughness: 0.5 });
+    const vFrame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.1, 0.25), frameMat);
+    vFrame.position.set(0, 2.95, -4.95);
+    roomGroup.add(vFrame);
+    const hFrame = new THREE.Mesh(new THREE.BoxGeometry(4, 0.12, 0.25), frameMat);
+    hFrame.position.set(0, 3.2, -4.95);
+    roomGroup.add(hFrame);
+
+
+    const curtainMat = new THREE.MeshStandardMaterial({ color: 0x6b1515, roughness: 0.7 });
+    const leftCurtain = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 4.5, 16), curtainMat);
+    leftCurtain.position.set(-2.1, 2.8, -4.75);
+    leftCurtain.castShadow = true;
+    roomGroup.add(leftCurtain);
+
+
+    const rightCurtain = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 4.5, 16), curtainMat);
+    rightCurtain.position.set(2.1, 2.8, -4.75);
+    rightCurtain.castShadow = true;
+    roomGroup.add(rightCurtain);
+
+
+    const curtainRod = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 5.0, 12), goldMat);
+    curtainRod.rotation.z = Math.PI / 2;
+    curtainRod.position.set(0, 5.05, -4.7);
+    roomGroup.add(curtainRod);
+
+
+    // Πίνακες στους τοίχους με χρυσές κορνίζες
+    function createPainting(x, y, z, color) {
+        const pGroup = new THREE.Group();
+        pGroup.position.set(x, y, z);
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.9, 0.08), goldMat);
+        frame.castShadow = true;
+        pGroup.add(frame);
+        const art = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.7), new THREE.MeshStandardMaterial({ color: color, roughness: 0.6 }));
+        art.position.z = 0.05;
+        pGroup.add(art);
+        roomGroup.add(pGroup);
+    }
+    createPainting(-4.5, 3.3, -4.8, 0x2c4230);
+    createPainting(4.5, 3.3, -4.8, 0x3d2b24);
+
+
+    // Πολυέλαιος στην οροφή
+    const chandelierGroup = new THREE.Group();
+    chandelierGroup.position.set(0, 5.3, 0);
+    roomGroup.add(chandelierGroup);
+    const chanRod = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), goldMat);
+    chanRod.position.y = 0.3;
+    chandelierGroup.add(chanRod);
+    const chanRing = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.04, 12, 24), goldMat);
+    chanRing.rotation.x = Math.PI / 2;
+    chanRing.position.y = -0.2;
+    chandelierGroup.add(chanRing);
+
+
+    // Κλασικές Πολυθρόνες Σαλονιού
+    function createArmchair(x, z, rotY) {
+        const chair = new THREE.Group();
+        chair.position.set(x, 0, z);
+        chair.rotation.y = rotY;
+        const velvet = new THREE.MeshStandardMaterial({ color: 0x274e37, roughness: 0.75 });
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.9), velvet);
+        seat.position.y = 0.55;
+        seat.castShadow = true;
+        chair.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.05, 0.18), velvet);
+        back.position.set(0, 1.1, -0.38);
+        back.rotation.x = -0.1;
+        back.castShadow = true;
+        chair.add(back);
+        // Μπράτσα
+        const armL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.35, 0.85), darkWoodMat);
+        armL.position.set(-0.45, 0.78, -0.02);
+        chair.add(armL);
+        const armR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.35, 0.85), darkWoodMat);
+        armR.position.set(0.45, 0.78, -0.02);
+        chair.add(armR);
+        // Πόδια
+        [[-0.4, -0.38], [0.4, -0.38], [-0.4, 0.38], [0.4, 0.38]].forEach(([lx, lz]) => {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.03, 0.55, 8), darkWoodMat);
+            leg.position.set(lx, 0.275, lz);
+            chair.add(leg);
+        });
+        roomGroup.add(chair);
+    }
+    createArmchair(-3.2, -1.6, 0.45);
+    createArmchair(3.2, -1.6, -0.45);
+
+
+    // --- 5. ΤΟ ΤΡΑΠΕΖΑΚΙ ΚΑΙ ΤΟ ΠΟΤΗΡΙ ΝΕΡΟΥ ---
+    const tableGroup = new THREE.Group();
+    tableGroup.position.set(-0.6, 0, -0.7); // Σε σημείο που φτάνει εύκολα το χέρι του Λόμοφ
+    roomGroup.add(tableGroup);
+
+
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.07, 32), darkWoodMat);
+    tableTop.position.y = 1.02;
+    tableTop.castShadow = true;
+    tableTop.receiveShadow = true;
+    tableGroup.add(tableTop);
+
+
+    // Δαντελένιο σεμεδάκι πάνω στο τραπέζι
+    const doily = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.01, 24), new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.9 }));
+    doily.position.y = 1.06;
+    tableGroup.add(doily);
+
+
+    const tablePillar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 1.0, 16), darkWoodMat);
+    tablePillar.position.y = 0.5;
+    tablePillar.castShadow = true;
+    tableGroup.add(tablePillar);
+
+
+    const tableBase = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 0.08, 20), darkWoodMat);
+    tableBase.position.y = 0.04;
+    tableGroup.add(tableBase);
+
+
+    // Ασημένιος Δίσκος
+    const silverMat = new THREE.MeshStandardMaterial({ color: 0xd8d8d8, roughness: 0.2, metalness: 0.85 });
+    const tray = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.32, 0.02, 24), silverMat);
+    tray.position.set(0, 1.07, 0);
+    tableGroup.add(tray);
+
+
+    // Γυάλινη Καράφα με Νερό
+    const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xd8f0ff,
+        transparent: true,
+        opacity: 0.55,
+        roughness: 0.08,
+        transmission: 0.6,
+        ior: 1.45
+    });
+    const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x4da6ff,
+        transparent: true,
+        opacity: 0.75,
+        roughness: 0.1
+    });
+
+
+    const carafeGroup = new THREE.Group();
+    carafeGroup.position.set(-0.12, 1.08, -0.05);
+    tableGroup.add(carafeGroup);
+
+
+    const carafeBody = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 20), glassMat);
+    carafeBody.position.y = 0.14;
+    carafeGroup.add(carafeBody);
+    const carafeWater = new THREE.Mesh(new THREE.SphereGeometry(0.125, 16, 16), waterMat);
+    carafeWater.position.y = 0.13;
+    carafeGroup.add(carafeWater);
+    const carafeNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.22, 16), glassMat);
+    carafeNeck.position.y = 0.3;
+    carafeGroup.add(carafeNeck);
+
+
+    // ΤΟ ΠΟΤΗΡΙ ΝΕΡΟΥ (που θα πιάνει στο χέρι του ο Λόμοφ!)
+    const drinkingGlass = new THREE.Group();
+    const glassHomePos = new THREE.Vector3(0.16, 1.08, 0.12);
+    drinkingGlass.position.copy(glassHomePos);
+    tableGroup.add(drinkingGlass);
+
+
+    const cupMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.15, 16), glassMat);
+    cupMesh.position.y = 0.075;
+    cupMesh.castShadow = true;
+    drinkingGlass.add(cupMesh);
+
+
+    const liquidMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.11, 16), waterMat);
+    liquidMesh.position.y = 0.06;
+    drinkingGlass.add(liquidMesh);
+
+
+    // --- 6. ΔΗΜΙΟΥΡΓΙΑ ΧΑΡΑΚΤΗΡΩΝ ΜΕ ΕΚΦΡΑΣΤΙΚΕΣ ΛΕΠΤΟΜΕΡΕΙΕΣ ---
+    function createCharacter(options) {
+        const charGroup = new THREE.Group();
+
+
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xf2c28b, roughness: 0.55 });
+        const suitMat = new THREE.MeshStandardMaterial({ color: options.suitColor, roughness: 0.65 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.4 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: options.hairColor, roughness: 0.75 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+
+
+        // Πόδια & Παπούτσια
+        const legGeo = new THREE.CylinderGeometry(0.11, 0.09, 0.88, 14);
+        const leftLeg = new THREE.Mesh(legGeo, suitMat);
+        leftLeg.position.set(-0.15, 0.46, 0);
+        leftLeg.castShadow = true;
+        charGroup.add(leftLeg);
+
+
+        const rightLeg = new THREE.Mesh(legGeo, suitMat);
+        rightLeg.position.set(0.15, 0.46, 0);
+        rightLeg.castShadow = true;
+        charGroup.add(rightLeg);
+
+
+        const shoeGeo = new THREE.BoxGeometry(0.14, 0.1, 0.28);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(0, -0.42, 0.05);
+        leftLeg.add(leftShoe);
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0, -0.42, 0.05);
+        rightLeg.add(rightShoe);
+
+
+        // Κορμός
+        const bodyGroup = new THREE.Group();
+        bodyGroup.position.y = 0.9;
+        charGroup.add(bodyGroup);
+
+
+        const torsoRadius = options.isStout ? 0.37 : 0.27;
+        const torsoGeo = new THREE.CylinderGeometry(0.28, torsoRadius, 0.86, 20);
+        const torso = new THREE.Mesh(torsoGeo, suitMat);
+        torso.position.y = 0.43;
+        torso.castShadow = true;
+        bodyGroup.add(torso);
+
+
+        // Πουκάμισο & Κολάρο
+        const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.46, torsoRadius + 0.05), shirtMat);
+        shirt.position.set(0, 0.56, 0.08);
+        bodyGroup.add(shirt);
+
+
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.08, 16), shirtMat);
+        collar.position.set(0, 0.87, 0);
+        bodyGroup.add(collar);
+
+
+        let heartMesh = null;
+        if (options.isFormal) {
+            // Φράκο Λόμοφ (ουρές πίσω, λευκό παπιγιόν, κόκκινη καρδιά που πάλλεται)
+            const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.06), suitMat);
+            tailL.position.set(-0.11, 0.02, -0.22);
+            tailL.rotation.x = 0.18;
+            bodyGroup.add(tailL);
+            const tailR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.06), suitMat);
+            tailR.position.set(0.11, 0.02, -0.22);
+            tailR.rotation.x = 0.18;
+            bodyGroup.add(tailR);
+
+
+            const bowTie = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.065, 0.05), shirtMat);
+            bowTie.position.set(0, 0.82, 0.25);
+            bodyGroup.add(bowTie);
+
+
+            // Πέτα σακακιού
+            const lapelGeo = new THREE.BoxGeometry(0.08, 0.42, 0.04);
+            const lapelL = new THREE.Mesh(lapelGeo, new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.3 }));
+            lapelL.position.set(-0.11, 0.6, 0.25);
+            lapelL.rotation.z = -0.2;
+            bodyGroup.add(lapelL);
+            const lapelR = lapelL.clone();
+            lapelR.position.x = 0.11;
+            lapelR.rotation.z = 0.2;
+            bodyGroup.add(lapelR);
+
+
+            // Η καρδιά του Λόμοφ
+            heartMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(0.065, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0xff2233 })
+            );
+            heartMesh.position.set(-0.1, 0.56, 0.26);
+            bodyGroup.add(heartMesh);
+        } else {
+            // Τσουμπούκοφ: Μπορντό γιλέκο και χρυσή αλυσίδα ρολογιού τσέπης
+            const vest = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.285, torsoRadius + 0.012, 0.62, 20),
+                new THREE.MeshStandardMaterial({ color: 0x7c1f1f, roughness: 0.6 })
+            );
+            vest.position.y = 0.36;
+            bodyGroup.add(vest);
+
+
+            const watchChain = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.012, 8, 16, Math.PI), goldMat);
+            watchChain.position.set(0.08, 0.32, torsoRadius - 0.01);
+            watchChain.rotation.x = Math.PI;
+            bodyGroup.add(watchChain);
+        }
+
+
+        // Κεφάλι & Πρόσωπο
+        const headGroup = new THREE.Group();
+        headGroup.position.y = 0.94;
+        bodyGroup.add(headGroup);
+
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.23, 24, 24), skinMat);
+        head.position.y = 0.18;
+        head.castShadow = true;
+        headGroup.add(head);
+
+
+        // Μύτη
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.1, 12), skinMat);
+        nose.position.set(0, 0.18, 0.24);
+        nose.rotation.x = Math.PI / 2;
+        headGroup.add(nose);
+
+
+        // Μάτια & Φρύδια
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x151515 });
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), eyeMat);
+        leftEye.position.set(-0.075, 0.22, 0.205);
+        headGroup.add(leftEye);
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), eyeMat);
+        rightEye.position.set(0.075, 0.22, 0.205);
+        headGroup.add(rightEye);
+
+
+        const browGeo = new THREE.BoxGeometry(0.07, 0.018, 0.02);
+        const leftBrow = new THREE.Mesh(browGeo, hairMat);
+        leftBrow.position.set(-0.075, 0.265, 0.21);
+        headGroup.add(leftBrow);
+        const rightBrow = new THREE.Mesh(browGeo, hairMat);
+        rightBrow.position.set(0.075, 0.265, 0.21);
+        headGroup.add(rightBrow);
+
+
+        // Μαλλιά
+        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
+        hair.position.y = 0.2;
+        hair.rotation.x = -0.25;
+        headGroup.add(hair);
+
+
+        if (options.isStout) {
+            // Μουστάκι & φαβορίτες Τσουμπούκοφ
+            const mustacheL = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.08, 8, 8), hairMat);
+            mustacheL.position.set(-0.05, 0.12, 0.22);
+            mustacheL.rotation.z = 1.3;
+            headGroup.add(mustacheL);
+            const mustacheR = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.08, 8, 8), hairMat);
+            mustacheR.position.set(0.05, 0.12, 0.22);
+            mustacheR.rotation.z = -1.3;
+            headGroup.add(mustacheR);
+        }
+
+
+        // Χέρια & Παλάμες (Λευκά γάντια για τον Λόμοφ!)
+        const armGeo = new THREE.CylinderGeometry(0.068, 0.058, 0.62, 14);
+        const handMat = options.isFormal ? shirtMat : skinMat;
+
+
+        const leftArmPivot = new THREE.Group();
+        leftArmPivot.position.set(-torsoRadius - 0.04, 0.76, 0);
+        bodyGroup.add(leftArmPivot);
+        const leftArm = new THREE.Mesh(armGeo, suitMat);
+        leftArm.position.y = -0.28;
+        leftArm.castShadow = true;
+        leftArmPivot.add(leftArm);
+        const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 14), handMat);
+        leftHand.position.y = -0.61;
+        leftArmPivot.add(leftHand);
+
+
+        const rightArmPivot = new THREE.Group();
+        rightArmPivot.position.set(torsoRadius + 0.04, 0.76, 0);
+        bodyGroup.add(rightArmPivot);
+        const rightArm = new THREE.Mesh(armGeo, suitMat);
+        rightArm.position.y = -0.28;
+        rightArm.castShadow = true;
+        rightArmPivot.add(rightArm);
+        const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 14), handMat);
+        rightHand.position.y = -0.61;
+        rightArmPivot.add(rightHand);
+
+
+        return {
+            group: charGroup,
+            body: bodyGroup,
+            head: headGroup,
+            leftArm: leftArmPivot,
+            rightArm: rightArmPivot,
+            leftHand: leftHand,
+            rightHand: rightHand,
+            leftLeg: leftLeg,
+            rightLeg: rightLeg,
+            rightBrow: rightBrow,
+            heart: heartMesh
+        };
+    }
+
+
+    // Λόμοφ (Αριστερά - Με επίσημο φράκο και λευκά γάντια)
+    const lomov = createCharacter({
+        suitColor: 0x151519,
+        hairColor: 0x4a3222,
+        isFormal: true,
+        isStout: false
+    });
+    lomov.group.position.set(-1.3, 0, 0.2);
+    lomov.group.rotation.y = 1.1;
+    scene.add(lomov.group);
+
+
+    // Τσουμπούκοφ (Δεξιά - Καλοκάγαθος γαιοκτήμονας)
+    const chubukov = createCharacter({
+        suitColor: 0x523a28,
+        hairColor: 0xd0d0d0,
+        isFormal: false,
+        isStout: true
+    });
+    chubukov.group.position.set(1.3, 0, 0.2);
+    chubukov.group.rotation.y = -1.1;
+    scene.add(chubukov.group);
+
+
+    // --- 7. ΟΛΟΚΛΗΡΟ ΤΟ ΚΕΙΜΕΝΟ ΤΗΣ ΜΕΤΑΦΡΑΣΗΣ & ΤΟ ΣΚΗΝΟΘΕΤΙΚΟ BLOCKING ---
+    const scriptScene1 = [
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Μπαίνει ο Λόμοφ. Φορά φράκο και λευκά γάντια. Ο Τσουμπούκοφ σηκώνεται για να τον υποδεχτεί. Του σφίγγει το χέρι.]",
+            text: "«Καλέ μου άνθρωπε, ποιον βλέπω! Ιβάν Βασίλιεβιτς! Τι χαρά! Μα τι ευχάριστη έκπληξη, αγαπητέ μου. Πώς είστε;»",
+            anxiety: 30,
+            cam: "wide",
+            pose: "handshake",
+            lomovX: -0.55, lomovZ: 0.25, lomovRotY: 1.35,
+            chubX: 0.55, chubZ: 0.25, chubRotY: -1.35
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Με επίσημη υπόκλιση και εμφανή αμηχανία]",
+            text: "«Ευχαριστώ. Εσείς πώς τα πάτε;»",
+            anxiety: 35,
+            cam: "center",
+            pose: "polite",
+            lomovX: -0.9, lomovZ: 0.25, lomovRotY: 1.2,
+            chubX: 0.9, chubZ: 0.25, chubRotY: -1.2
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Κοιτάζει με περιέργεια την επίσημη αμφίεση του Λόμοφ]",
+            text: "«Τα φέρνουμε βόλτα, αγαπητέ μου, με τις ευχές σας και τα λοιπά. Καθίστε, σας παρακαλώ. Ξέρετε, δεν κάνει να ξεχνάτε έτσι τους γείτονές σας, αγαπητέ μου. Και τι επισημότητες είναι αυτές; Φράκο, γάντια και τα λοιπά. Πηγαίνετε κάπου, καλέ μου;»",
+            anxiety: 42,
+            cam: "chubukov",
+            pose: "curious",
+            lomovX: -1.2, lomovZ: 0.2, lomovRotY: 1.1,
+            chubX: 1.1, chubZ: 0.2, chubRotY: -1.1
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Τρέμοντας ελαφρά]",
+            text: "«Όχι, ήρθα μόνο για να σας δω, αξιότιμε Στεπάν Στεπάνοβιτς.»",
+            anxiety: 50,
+            cam: "lomov",
+            pose: "nervous",
+            lomovX: -1.2, lomovZ: 0.2, lomovRotY: 1.1,
+            chubX: 1.1, chubZ: 0.2, chubRotY: -1.1
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Γελαστά, ανοίγοντας τα χέρια]",
+            text: "«Τότε γιατί το φράκο, αγαπητέ μου; Σαν να βγήκατε για πρωτοχρονιάτικες επισκέψεις!»",
+            anxiety: 55,
+            cam: "chubukov",
+            pose: "curious",
+            lomovX: -1.2, lomovZ: 0.2, lomovRotY: 1.1,
+            chubX: 1.1, chubZ: 0.2, chubRotY: -1.1
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Τον πιάνει από το μπράτσο... Έπειτα πίνει νερό από το τραπέζι]",
+            text: "«Βλέπετε, το πράγμα είναι κάπως έτσι. Ήρθα, αξιότιμε Στεπάν Στεπάνοβιτς, να σας ενοχλήσω με μια παράκληση. Έχω κι άλλες φορές ζητήσει τη βοήθειά σας και πάντοτε, πώς να το πω, με βοηθήσατε. Συγχωρέστε με, έχω ταραχτεί. Θα πιω λίγο νερό, αξιότιμε Στεπάν Στεπάνοβιτς.» [Πίνει.]",
+            anxiety: 75,
+            cam: "center",
+            pose: "grab_and_drink",
+            autoDrink: true,
+            lomovX: -0.65, lomovZ: -0.1, lomovRotY: 0.9,
+            chubX: 0.65, chubZ: 0.2, chubRotY: -1.2
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Από μέσα του — προς το κοινό — και έπειτα δυνατά]",
+            text: "[Από μέσα του.] «Ήρθε να δανειστεί λεφτά! Δε θα του δώσω δεκάρα!» [Δυνατά.] «Λοιπόν, καλέ μου; Τι συμβαίνει;»",
+            anxiety: 70,
+            cam: "chubukov",
+            pose: "aside",
+            lomovX: -1.1, lomovZ: 0.1, lomovRotY: 1.0,
+            chubX: 1.3, chubZ: 0.5, chubRotY: -0.25
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Με ολοένα μεγαλύτερη ταραχή και μπερδεύοντας τα λόγια του]",
+            text: "«Βλέπετε, αξιότιμε Στεπάν... συγχωρέστε με, Στεπάν αξιότιμε... θέλω να πω, έχω φοβερή ταραχή, όπως βλέπετε. Με λίγα λόγια, μόνο εσείς μπορείτε να με βοηθήσετε, παρόλο που δεν το αξίζω, βέβαια, και δεν έχω κανένα δικαίωμα να περιμένω τη βοήθειά σας...»",
+            anxiety: 85,
+            cam: "lomov",
+            pose: "palpitations",
+            lomovX: -1.1, lomovZ: 0.2, lomovRotY: 1.1,
+            chubX: 1.1, chubZ: 0.2, chubRotY: -1.1
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Ανυπόμονα]",
+            text: "«Αχ, μη γυρίζετε γύρω γύρω, αγαπητέ μου! Πείτε το επιτέλους! Λοιπόν;»",
+            anxiety: 90,
+            cam: "chubukov",
+            pose: "impatient",
+            lomovX: -1.1, lomovZ: 0.2, lomovRotY: 1.1,
+            chubX: 0.95, chubZ: 0.2, chubRotY: -1.2
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Παίρνει βαθιά ανάσα και το ξεστομίζει]",
+            text: "«Μια στιγμή... τώρα αμέσως. Το ζήτημα είναι πως ήρθα να ζητήσω το χέρι της κόρης σας, της Νατάλιας Στεπάνοβνας.»",
+            anxiety: 100,
+            cam: "lomov",
+            pose: "climax",
+            lomovX: -0.9, lomovZ: 0.2, lomovRotY: 1.25,
+            chubX: 0.9, chubZ: 0.2, chubRotY: -1.25
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Περιχαρής — πλησιάζει ενθουσιασμένος τον Λόμοφ!]",
+            text: "«Θεέ μου! Ιβάν Βασίλιεβιτς! Πείτε το ξανά, δεν το άκουσα ολόκληρο!»",
+            anxiety: 80,
+            cam: "center",
+            pose: "joy_approach",
+            lomovX: -0.65, lomovZ: 0.25, lomovRotY: 1.35,
+            chubX: 0.25, chubZ: 0.25, chubRotY: -1.45
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Επίσημα αλλά με τρεμάμενη φωνή]",
+            text: "«Έχω την τιμή να ζητήσω...»",
+            anxiety: 75,
+            cam: "center",
+            pose: "polite",
+            lomovX: -0.65, lomovZ: 0.25, lomovRotY: 1.35,
+            chubX: 0.2, chubZ: 0.25, chubRotY: -1.45
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Τον διακόπτει. Αγκαλιάζει και φιλά τον Λόμοφ. Βουρκώνει και χάνει την ισορροπία του από τη χαρά του!]",
+            text: "«Καλέ μου άνθρωπε! Πόσο χαίρομαι και τα λοιπά! Ναι, ναι, ακριβώς αυτό! Το περίμενα εδώ και πολύ καιρό. Ήταν η πιο μεγάλη μου επιθυμία. Και πάντα σας αγαπούσα, αγαπητέ μου, σαν να ήσασταν δικό μου παιδί. Ο Θεός να σας δώσει αγάπη, βοήθεια και κάθε καλό. Πόσο το ήθελα! Μα τι κάνω τώρα σαν χαζός; Από τη χαρά μου έχασα την ισορροπία μου, εντελώς! Με όλη μου την ψυχή... Θα πάω να φωνάξω τη Νατάσα και τα λοιπά.»",
+            anxiety: 55,
+            cam: "center",
+            pose: "embrace",
+            lomovX: -0.5, lomovZ: 0.25, lomovRotY: 1.4,
+            chubX: -0.02, chubZ: 0.25, chubRotY: -1.5
+        },
+        {
+            speaker: "ΛΟΜΟΦ",
+            direction: "[Βαθιά συγκινημένος]",
+            text: "«Αξιότιμε Στεπάν Στεπάνοβιτς, πιστεύετε πως μπορώ να ελπίζω στη συγκατάθεσή της;»",
+            anxiety: 65,
+            cam: "lomov",
+            pose: "moved",
+            lomovX: -0.6, lomovZ: 0.25, lomovRotY: 1.35,
+            chubX: 1.4, chubZ: 0.4, chubRotY: -1.2
+        },
+        {
+            speaker: "ΤΣΟΥΜΠΟΥΚΟΦ",
+            direction: "[Κατευθύνεται προς την πόρτα δεξιά και βγαίνει]",
+            text: "«Μα φυσικά, αγαπητέ μου! Και βέβαια θα δεχτεί. Ερωτευμένη είναι, έχει λιώσει σαν γατούλα και τα λοιπά. Μια στιγμή μονάχα!» [Βγαίνει.]",
+            anxiety: 75,
+            cam: "wide",
+            pose: "exit",
+            lomovX: -0.8, lomovZ: 0.25, lomovRotY: 1.2,
+            chubX: 5.8, chubZ: 1.1, chubRotY: 1.2
+        }
+    ];
+
+
+    // --- 8. ΚΑΤΑΣΤΑΣΗ ΣΚΗΝΗΣ, DRINK ANIMATION & BLOCKING ---
+    let currentLineIndex = 0;
+    let anxietyLevel = 30;
+
+
+    // Στόχοι θέσης & περιστροφής χαρακτήρων για ομαλή κίνηση (lerp)
+    const lomovTargetPos = new THREE.Vector3(-0.55, 0, 0.25);
+    let lomovTargetRotY = 1.35;
+    const chubTargetPos = new THREE.Vector3(0.55, 0, 0.25);
+    let chubTargetRotY = -1.35;
+
+
+    // Κατάσταση Animation «Πίνει Νερό»
+    let drinkState = 'none'; // 'none' | 'reaching' | 'drinking' | 'returning'
+    let drinkTimer = 0;
+    let savedLomovPos = new THREE.Vector3();
+    let savedLomovRotY = 1.1;
+
+
+    // Κάμερα
+    let targetCamPos = new THREE.Vector3(0, 3.6, 9.2);
+    let targetLookAt = new THREE.Vector3(0, 1.5, 0);
+    let isTransitioningCam = false;
+
+
+    const anxietySlider = document.getElementById('anxiety-slider');
+    const anxietyValText = document.getElementById('anxiety-val');
+    const heartDot = document.getElementById('heart-dot');
+
+
+
+
+    // --- 8A. ΕΡΓΑΣΤΗΡΙΟ: ελεύθερες θέσεις, επιλογή προσώπου, σκηνική ακολουθία ---
+    let workshopMode = 'watch';
+    let workshopTool = 'camera';
+    let workshopSelected = 'lomov';
+    let workshopDragging = false;
+    let workshopPointer = null;
+    let workshopSteps = [];
+    let workshopTimer = null;
+    let workshopPlaying = false;
+    let workshopSavedCameras = [];
+    let workshopActions = {lomov:'text', chubukov:'text'};    const workshopActionNames = {text:'Κείμενο', idle:'Στάση', approach:'Πλησιάζει', retreat:'Απομακρύνεται', reach:'Χέρι', greet:'Χαιρετά', sit:'Κάθεται', look:'Κοιτάζει'};
+
+
+    const workshopRaycaster = new THREE.Raycaster();
+    const workshopGround = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+    const workshopMouse = new THREE.Vector2();
+    const workshopIntersection = new THREE.Vector3();
+    const workshopRing = new THREE.Mesh(
+        new THREE.RingGeometry(0.43, 0.54, 48),
+        new THREE.MeshBasicMaterial({color:0x95e8c1, transparent:true, opacity:.80, side:THREE.DoubleSide, depthTest:false})
+    );
+    workshopRing.rotation.x = -Math.PI/2;
+    workshopRing.position.y = .035;
+    workshopRing.renderOrder = 10;
+    workshopRing.visible = false;
+    scene.add(workshopRing);
+
+
+    function workshopStatus(message) {
+        document.getElementById('workshop-status').textContent = message;
+    }
+    function workshopActor() { return workshopSelected === 'lomov' ? lomov : chubukov; }
+    function workshopTarget() { return workshopSelected === 'lomov' ? lomovTargetPos : chubTargetPos; }
+    function workshopSyncButtons() {
+        document.getElementById('watch-mode-btn').classList.toggle('active', workshopMode === 'watch');
+        document.getElementById('explore-mode-btn').classList.toggle('active', workshopMode === 'explore');
+        document.getElementById('select-lomov').classList.toggle('active', workshopSelected === 'lomov');
+        document.getElementById('select-chubukov').classList.toggle('active', workshopSelected === 'chubukov');
+        document.getElementById('camera-tool').classList.toggle('active', workshopTool === 'camera');
+        document.getElementById('move-tool').classList.toggle('active', workshopTool === 'move');
+        document.getElementById('workshop-action').value = workshopActions[workshopSelected];
+        document.getElementById('workshop-tools').hidden = workshopMode !== 'explore';
+        controls.enabled = workshopMode !== 'explore' || workshopTool === 'camera';
+        renderer.domElement.style.cursor = workshopMode === 'explore' && workshopTool === 'move' ? 'crosshair' : 'grab';
+        workshopRing.visible = workshopMode === 'explore';
+    }
+    function stopWorkshopPlayback() {
+        if (workshopTimer !== null) clearTimeout(workshopTimer);
+        workshopTimer = null;
+        workshopPlaying = false;
+    }
+    window.setWorkshopMode = function(mode) {
+        stopWorkshopPlayback();
+        workshopMode = mode === 'explore' ? 'explore' : 'watch';
+        workshopTool = 'camera';
+        if (workshopMode === 'watch') {
+            updateSceneState(); // επαναφορά στην αρχική σκηνοθεσία της συγκεκριμένης ατάκας
+        } else {
+            workshopStatus('Εξερεύνησε με το ποντίκι ή άλλαξε σε Μετακίνηση για να τοποθετήσεις πρόσωπα.');
+        }
+        workshopSyncButtons();
+    };
+    window.selectWorkshopActor = function(which) {
+        if (workshopMode !== 'explore') return;
+        workshopSelected = which === 'chubukov' ? 'chubukov' : 'lomov';
+        workshopSyncButtons();
+        workshopStatus('Επιλέχθηκε: ' + (workshopSelected === 'lomov' ? 'Λόμοφ' : 'Τσουμπούκοφ') + '.');
+    };
+    window.setWorkshopTool = function(tool) {
+        workshopTool = tool === 'move' ? 'move' : 'camera';
+        workshopSyncButtons();
+        workshopStatus(workshopTool === 'move' ? 'Πάτησε ή σύρε επάνω στη σκηνή.' : 'Περιηγήσου στη σκηνή με το ποντίκι.');
+    };
+    function workshopFaceOther(id) {
+        const me=id==='lomov'?lomovTargetPos:chubTargetPos;
+        const other=id==='lomov'?chubTargetPos:lomovTargetPos;
+        const angle=Math.atan2(other.x-me.x,other.z-me.z);
+        if(id==='lomov')lomovTargetRotY=angle;else chubTargetRotY=angle;
+    }
+    window.setWorkshopAction=function(action) {
+        if(workshopMode!=='explore'||!Object.prototype.hasOwnProperty.call(workshopActionNames,action))return;
+        stopWorkshopPlayback();
+        const id=workshopSelected;
+        const me=id==='lomov'?lomovTargetPos:chubTargetPos;
+        const other=id==='lomov'?chubTargetPos:lomovTargetPos;
+        let dx=me.x-other.x,dz=me.z-other.z,dist=Math.hypot(dx,dz);
+        if(dist<.1){dx=id==='lomov'?-1:1;dz=0;dist=1;}
+        dx/=dist;dz/=dist;
+        if(action==='approach'){me.x=other.x+dx*1.05;me.z=other.z+dz*1.05;workshopFaceOther(id);}
+        if(action==='retreat'){me.x+=dx*1.4;me.z+=dz*1.4;}
+        if(action==='sit'){me.set(id==='lomov'?-3.2:3.2,0,-1.6);if(id==='lomov')lomovTargetRotY=.45;else chubTargetRotY=-.45;}
+        if(action==='look')workshopFaceOther(id);
+        me.x=THREE.MathUtils.clamp(me.x,-5.7,5.7);me.z=THREE.MathUtils.clamp(me.z,-3.9,3.9);
+        workshopActions[id]=action;
+        workshopStatus((id==='lomov'?'Λόμοφ: ':'Τσουμπούκοφ: ')+workshopActionNames[action]+'.');
+    };
+    window.nudgeWorkshopActor = function(dx, dz) {
+        if (workshopMode !== 'explore') return;
+        stopWorkshopPlayback();
+        const v = workshopTarget();
+        v.x = THREE.MathUtils.clamp(v.x + dx, -5.7, 5.7);
+        v.z = THREE.MathUtils.clamp(v.z + dz, -3.9, 3.9);
+        workshopStatus('Η θέση άλλαξε. Πάτησε Καταγραφή για να τη διατηρήσεις στην ακολουθία.');
+    };
+    window.rotateWorkshopActor = function(degrees) {
+        if (workshopMode !== 'explore') return;
+        stopWorkshopPlayback();
+        if (workshopSelected === 'lomov') lomovTargetRotY += THREE.MathUtils.degToRad(degrees);
+        else chubTargetRotY += THREE.MathUtils.degToRad(degrees);
+        workshopStatus('Άλλαξε η κατεύθυνση του προσώπου.');
+    };
+    window.resetWorkshopPose = function() {
+        if (workshopMode !== 'explore') return;
+        stopWorkshopPlayback();
+        const line = scriptScene1[currentLineIndex];
+        lomovTargetPos.set(line.lomovX, 0, line.lomovZ);
+        lomovTargetRotY = line.lomovRotY;
+        chubTargetPos.set(line.chubX, 0, line.chubZ);
+        chubTargetRotY = line.chubRotY;
+        setAnxiety(line.anxiety);
+        workshopStatus('Οι θέσεις επανήλθαν στην αρχική σκηνοθεσία αυτής της ατάκας.');
+    };
+    function workshopCameraView() {
+        return {position:camera.position.toArray(),target:controls.target.toArray()};
+    }
+    function workshopShowCamera(view) {
+        if(!view||!Array.isArray(view.position)||!Array.isArray(view.target))return;
+        targetCamPos.fromArray(view.position);
+        targetLookAt.fromArray(view.target);
+        isTransitioningCam=true;
+        setTimeout(()=>{isTransitioningCam=false;},1200);
+    }
+    function workshopRefreshCameras() {
+        const root=document.getElementById('workshop-cameras');
+        root.replaceChildren();
+        workshopSavedCameras.forEach((view,i)=>{
+            const btn=document.createElement('button');
+            btn.type='button';btn.textContent='📷 '+view.name;
+            btn.addEventListener('click',()=>{
+                workshopShowCamera(view);
+                workshopStatus('Εμφανίζεται το '+view.name+'.');
+            });
+            root.appendChild(btn);
+        });
+    }
+    window.saveWorkshopCamera=function() {
+        if(workshopMode!=='explore')return;
+        if(workshopSavedCameras.length>=8){workshopStatus('Έχεις κρατήσει οκτώ πλάνα.');return;}
+        const view=workshopCameraView();
+        view.name='Πλάνο '+(workshopSavedCameras.length+1);
+        workshopSavedCameras.push(view);
+        workshopRefreshCameras();
+        workshopStatus('Κράτησες το '+view.name+'. Θα αποθηκευτεί μαζί με τη σκηνή σου.');
+    };
+    function workshopSnapshot() {
+        return {
+            lineIndex: currentLineIndex, speaker: scriptScene1[currentLineIndex].speaker,
+            lomovX: +lomovTargetPos.x.toFixed(3), lomovZ: +lomovTargetPos.z.toFixed(3),
+            lomovRotY: +lomovTargetRotY.toFixed(4),
+            chubX: +chubTargetPos.x.toFixed(3), chubZ: +chubTargetPos.z.toFixed(3),
+            chubRotY: +chubTargetRotY.toFixed(4), anxiety: anxietyLevel,
+            actions:{...workshopActions}, camera:workshopCameraView()
+        };
+    }
+    function workshopRefreshList() {
+        const list = document.getElementById('workshop-steps');
+        list.replaceChildren();
+        workshopSteps.forEach(function(step,i) {
+            const li = document.createElement('li');
+            li.textContent = 'Στιγμή ' + (i+1) + ' · ατάκα ' + (step.lineIndex+1) + ' · ' + step.speaker;
+            list.appendChild(li);
+        });
+    }
+    window.recordWorkshopStep = function() {
+        if (workshopMode !== 'explore') return;
+        stopWorkshopPlayback();
+        if (workshopSteps.length >= 30) {
+            workshopStatus('Το όριο είναι 30 στιγμές. Κατέβασε τη σύνθεση και ξεκίνησε νέα.');
+            return;
+        }
+        workshopSteps.push(workshopSnapshot());
+        workshopRefreshList();
+        workshopStatus('Καταγράφηκε η στιγμή ' + workshopSteps.length + '. Μπορείς να προχωρήσεις στην επόμενη ατάκα.');
+    };
+    function workshopApplySnapshot(step) {
+        currentLineIndex = step.lineIndex;
+        updateSceneState(); // στην Εξερεύνηση δεν αντικαθιστά τις χειροκίνητες θέσεις
+        lomovTargetPos.set(step.lomovX, 0, step.lomovZ);
+        chubTargetPos.set(step.chubX, 0, step.chubZ);
+        lomovTargetRotY = step.lomovRotY;
+        chubTargetRotY = step.chubRotY;
+        setAnxiety(step.anxiety);
+        workshopActions = step.actions ? {lomov:step.actions.lomov,chubukov:step.actions.chubukov} : {lomov:'text',chubukov:'text'};
+        if(step.camera)workshopShowCamera(step.camera);
+        workshopSyncButtons();
+    }
+    window.playWorkshopSteps = function() {
+        if (workshopMode !== 'explore') return;
+        if (!workshopSteps.length) {
+            workshopStatus('Πρώτα κατάγραψε μία ή περισσότερες σκηνικές στιγμές.');
+            return;
+        }
+        stopWorkshopPlayback();
+        workshopPlaying = true;
+        const sequence = workshopSteps.slice(); // αναπαραγωγή με τη σειρά καταγραφής
+        function playAt(i) {
+            if (!workshopPlaying) return;
+            if (i >= sequence.length) {
+                stopWorkshopPlayback();
+                workshopStatus('Η σκηνική ακολουθία ολοκληρώθηκε.');
+                return;
+            }
+            workshopApplySnapshot(sequence[i]);
+            workshopStatus('Παίζουμε τη στιγμή ' + (i+1) + ' από ' + sequence.length + '.');
+            workshopTimer = setTimeout(function() { playAt(i+1); }, 3200);
+        }
+        playAt(0);
+    };
+    window.clearWorkshopSteps = function() {
+        stopWorkshopPlayback();
+        workshopSteps = [];
+        workshopRefreshList();
+        workshopStatus('Η ακολουθία καθαρίστηκε. Οι τωρινές θέσεις παραμένουν.');
+    };
+    window.exportWorkshopSteps = function() {
+        if (!workshopSteps.length && !workshopSavedCameras.length) { workshopStatus('Κράτησε πρώτα μία στιγμή ή ένα πλάνο.'); return; }
+        const payload = {
+            title: 'Η Πρόταση Γάμου – Εργαστήριο Σκηνής',
+            version: 3, format: 'chekhov-scene-workshop/v2',
+            note: 'Οι τιμές αναπαριστούν σκηνικές επιλογές, όχι μετρήσεις συναισθημάτων.',
+            cameras: workshopSavedCameras,
+            steps: workshopSteps
+        };
+        const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Η_δική_μου_σκηνή.json'; a.click();
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        workshopStatus('Η σκηνή σου αποθηκεύτηκε! Φύλαξε το αρχείο για να την ανοίξεις ξανά.');
+    };
+    function workshopValidStep(s) {
+        return s && Number.isInteger(s.lineIndex) && s.lineIndex >= 0 &&
+            s.lineIndex < scriptScene1.length &&
+            ['lomovX','lomovZ','lomovRotY','chubX','chubZ','chubRotY','anxiety'].every(
+                function(k){ return typeof s[k] === 'number' && Number.isFinite(s[k]); });
+    }
+    document.getElementById('workshop-import').addEventListener('change', async function(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        try {
+            if (file.size > 100000) throw new Error('Το αρχείο είναι πολύ μεγάλο.');
+            const data = JSON.parse(await file.text());
+            if (!data || !['chekhov-scene-workshop/v1','chekhov-scene-workshop/v2'].includes(data.format) ||
+                !Array.isArray(data.steps) || data.steps.length > 30 ||
+                !data.steps.every(workshopValidStep)) throw new Error('Δεν αναγνωρίζεται αυτή η σύνθεση.');
+            stopWorkshopPlayback();
+            workshopSteps = data.steps.map(function(s){ return {...s, speaker:scriptScene1[s.lineIndex].speaker}; });
+            workshopRefreshList();
+            workshopSavedCameras=Array.isArray(data.cameras)?data.cameras.slice(0,8).filter(
+                v=>v&&Array.isArray(v.position)&&Array.isArray(v.target)&&
+                v.position.length===3&&v.target.length===3&&
+                [...v.position,...v.target].every(x=>typeof x==='number'&&Number.isFinite(x)&&Math.abs(x)<100)
+            ).map((v,i)=>({name:'Πλάνο '+(i+1),position:v.position,target:v.target})):[];
+            workshopRefreshCameras();
+            workshopStatus('Φορτώθηκαν ' + workshopSteps.length + ' σκηνικές στιγμές.');
+        } catch(err) {
+            workshopStatus('Δεν ήταν δυνατό το άνοιγμα: ' + err.message);
+        }
+        e.target.value = '';
+    });
+    function workshopPointerOnGround(e) {
+        const bounds = renderer.domElement.getBoundingClientRect();
+        workshopMouse.set(((e.clientX-bounds.left)/bounds.width)*2-1,
+            -((e.clientY-bounds.top)/bounds.height)*2+1);
+        workshopRaycaster.setFromCamera(workshopMouse, camera);
+        if (!workshopRaycaster.ray.intersectPlane(workshopGround, workshopIntersection)) return false;
+        const actorTarget = workshopTarget();
+        actorTarget.x = THREE.MathUtils.clamp(workshopIntersection.x, -5.7, 5.7);
+        actorTarget.z = THREE.MathUtils.clamp(workshopIntersection.z, -3.9, 3.9);
+        return true;
+    }
+    renderer.domElement.addEventListener('pointerdown', function(e) {
+        if (workshopMode !== 'explore' || workshopTool !== 'move' || e.button !== 0) return;
+        stopWorkshopPlayback();
+        if (!workshopPointerOnGround(e)) return;
+        workshopDragging = true; workshopPointer = e.pointerId;
+        renderer.domElement.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+    renderer.domElement.addEventListener('pointermove', function(e) {
+        if (!workshopDragging || e.pointerId !== workshopPointer) return;
+        workshopPointerOnGround(e);
+    });
+    function workshopPointerUp(e) {
+        if (workshopPointer !== e.pointerId) return;
+        workshopDragging = false; workshopPointer = null;
+        if (renderer.domElement.hasPointerCapture(e.pointerId)) renderer.domElement.releasePointerCapture(e.pointerId);
+        workshopStatus('Τοποθέτησες το πρόσωπο. Μπορείς να το περιστρέψεις ή να καταγράψεις τη στιγμή.');
+    }
+    renderer.domElement.addEventListener('pointerup', workshopPointerUp);
+    renderer.domElement.addEventListener('pointercancel', workshopPointerUp);
+    workshopSyncButtons();
+
+
+    anxietySlider.addEventListener('input', (e) => {
+        setAnxiety(parseInt(e.target.value));
+    });
+
+
+    function setAnxiety(val) {
+        anxietyLevel = val;
+        anxietySlider.value = val;
+        anxietyValText.innerText = val + '%';
+        const animSpeed = Math.max(0.22, 1.1 - (val / 115));
+        heartDot.style.animationDuration = `${animSpeed}s`;
+    }
+
+
+    // Συνάρτηση που κάνει τον Λόμοφ να πιάνει πραγματικά το ποτήρι στο χέρι του και να πίνει!
+    window.triggerDrinkWater = function() {
+        if (drinkState !== 'none') return; // Αποφυγή διπλού πατήματος
+
+
+        savedLomovPos.copy(lomovTargetPos);
+        savedLomovRotY = lomovTargetRotY;
+
+
+        // Ο Λόμοφ κάνει ένα βήμα δίπλα στο τραπεζάκι (-0.6, -0.7) ώστε το δεξί του χέρι να φτάσει το ποτήρι
+        lomovTargetPos.set(-0.85, 0, -0.22);
+        lomovTargetRotY = 2.6; // Στρέφεται προς το τραπέζι
+
+
+        drinkState = 'reaching';
+        drinkTimer = 0;
+    };
+
+
+    function updateSceneState() {
+        const line = scriptScene1[currentLineIndex];
+        document.getElementById('speaker').innerText = line.speaker;
+        document.getElementById('direction').innerText = line.direction;
+        document.getElementById('dialogue').innerText = line.text;
+        document.getElementById('step-info').innerText = `Σκηνή 1 — Ατάκα ${currentLineIndex + 1} / ${scriptScene1.length}`;
+
+
+        // Οι θέσεις του σκηνοθέτη-σπουδαστή δεν αντικαθίστανται όταν αλλάζει ατάκα.
+        if (workshopMode !== 'explore') {
+            setAnxiety(line.anxiety);
+            window.setCameraView(line.cam);
+            lomovTargetPos.set(line.lomovX, 0, line.lomovZ);
+            lomovTargetRotY = line.lomovRotY;
+            chubTargetPos.set(line.chubX, 0, line.chubZ);
+            chubTargetRotY = line.chubRotY;
+        }
+
+
+        // Αυτόματη πόση μόνο στην προκαθορισμένη παρουσίαση.
+        if (workshopMode !== 'explore' && line.autoDrink) {
+            setTimeout(() => {
+                if (currentLineIndex === 5) window.triggerDrinkWater();
+            }, 900);
+        }
+    }
+
+
+    window.nextLine = function() {
+        currentLineIndex = (currentLineIndex + 1) % scriptScene1.length;
+        updateSceneState();
+    };
+
+
+    window.prevLine = function() {
+        currentLineIndex = (currentLineIndex - 1 + scriptScene1.length) % scriptScene1.length;
+        updateSceneState();
+    };
+
+
+    window.setCameraView = function(view) {
+        isTransitioningCam = true;
+        if (view === 'wide') {
+            targetCamPos.set(0, 3.6, 9.2);
+            targetLookAt.set(0, 1.5, 0);
+        } else if (view === 'center') {
+            targetCamPos.set(0, 2.3, 4.6);
+            targetLookAt.set(0, 1.65, 0.2);
+        } else if (view === 'lomov') {
+            targetCamPos.set(0.5, 2.15, 3.2);
+            targetLookAt.set(-0.9, 1.7, 0.2);
+        } else if (view === 'chubukov') {
+            targetCamPos.set(-0.5, 2.15, 3.2);
+            targetLookAt.set(0.9, 1.7, 0.2);
+        }
+        if(view==='top') {targetCamPos.set(0.02,12.5,0.02);targetLookAt.set(0,0.4,0);}
+        setTimeout(() => { isTransitioningCam = false; }, 1100);
+    };
+
+
+    // Αρχικοποίηση στην Ατάκα 1
+    updateSceneState();
+
+
+    // --- 9. ΚΥΡΙΟΣ ΒΡΟΧΟΣ ANIMATION ---
+    const clock = new THREE.Clock();
+
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const dt = clock.getDelta();
+        const t = clock.getElapsedTime();
+
+
+        const currentPose = scriptScene1[currentLineIndex].pose;
+        const intensity = anxietyLevel / 100;
+        const shakeFreq = 12 + intensity * 24;
+
+
+        // 1. Ομαλή μετακίνηση (walking/blocking) των χαρακτήρων στις θέσεις τους
+        const lomovDist = lomov.group.position.distanceTo(lomovTargetPos);
+        lomov.group.position.lerp(lomovTargetPos, 0.07);
+        lomov.group.rotation.y = THREE.MathUtils.lerp(lomov.group.rotation.y, lomovTargetRotY, 0.08);
+
+
+        const chubDist = chubukov.group.position.distanceTo(chubTargetPos);
+        chubukov.group.position.lerp(chubTargetPos, 0.06);
+        chubukov.group.rotation.y = THREE.MathUtils.lerp(chubukov.group.rotation.y, chubTargetRotY, 0.08);
+
+
+        // Βηματισμός ποδιών όταν περπατούν
+        if (lomovDist > 0.05) {
+            lomov.leftLeg.rotation.x = Math.sin(t * 14) * 0.35;
+            lomov.rightLeg.rotation.x = -Math.sin(t * 14) * 0.35;
+        } else {
+            lomov.leftLeg.rotation.x = THREE.MathUtils.lerp(lomov.leftLeg.rotation.x, 0, 0.15);
+            lomov.rightLeg.rotation.x = THREE.MathUtils.lerp(lomov.rightLeg.rotation.x, 0, 0.15);
+        }
+
+
+        if (chubDist > 0.05) {
+            chubukov.leftLeg.rotation.x = Math.sin(t * 12) * 0.35;
+            chubukov.rightLeg.rotation.x = -Math.sin(t * 12) * 0.35;
+        } else {
+            chubukov.leftLeg.rotation.x = THREE.MathUtils.lerp(chubukov.leftLeg.rotation.x, 0, 0.15);
+            chubukov.rightLeg.rotation.x = THREE.MathUtils.lerp(chubukov.rightLeg.rotation.x, 0, 0.15);
+        }
+
+
+        // 2. Νευρικότητα, τικ φρυδιού & παλμοί Λόμοφ
+        lomov.body.position.x = Math.sin(t * shakeFreq) * 0.014 * intensity;
+        lomov.rightLeg.position.y = 0.46 + Math.abs(Math.sin(t * (shakeFreq * 0.5))) * 0.045 * intensity;
+        lomov.rightBrow.position.y = 0.265 + Math.abs(Math.sin(t * 15)) * 0.018 * intensity;
+
+
+        const heartScale = 1 + Math.sin(t * (6 + intensity * 18)) * (0.2 + intensity * 0.55);
+        lomov.heart.scale.set(heartScale, heartScale, heartScale);
+
+
+        // 3. STATE MACHINE ΓΙΑ ΤΟ «ΠΙΝΕΙ ΝΕΡΟ» (Το ποτήρι κουμπώνει στην παλάμη του Λόμοφ!)
+        if (drinkState !== 'none') {
+            drinkTimer += dt;
+
+
+            if (drinkState === 'reaching') {
+                // Απλώνει το δεξί χέρι προς το ποτήρι πάνω στο τραπέζι
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -1.25, 0.15);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, -0.15, 0.15);
+
+
+                if (drinkTimer > 0.65) {
+                    // Κουμπώνουμε το ποτήρι απευθείας στην παλάμη του Λόμοφ (lomov.rightHand)!
+                    lomov.rightHand.add(drinkingGlass);
+                    drinkingGlass.position.set(0, -0.04, 0.07);
+                    drinkingGlass.rotation.set(Math.PI / 2, 0, 0);
+                    drinkState = 'drinking';
+                    drinkTimer = 0;
+                }
+            } else if (drinkState === 'drinking') {
+                // Φέρνει το χέρι με το ποτήρι στο στόμα και γέρνει το κεφάλι πίσω για να πιει
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -2.35, 0.14);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, -0.38, 0.14);
+                lomov.head.rotation.x = THREE.MathUtils.lerp(lomov.head.rotation.x, -0.45, 0.14);
+                // Η στάθμη του νερού στο ποτήρι κατεβαίνει λίγο καθώς πίνει
+                liquidMesh.scale.y = Math.max(0.3, liquidMesh.scale.y - dt * 0.35);
+
+
+                if (drinkTimer > 1.35) {
+                    drinkState = 'returning';
+                    drinkTimer = 0;
+                }
+            } else if (drinkState === 'returning') {
+                // Κατεβάζει το χέρι για να αφήσει το ποτήρι πίσω στο τραπέζι
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -1.2, 0.15);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, 0, 0.15);
+                lomov.head.rotation.x = THREE.MathUtils.lerp(lomov.head.rotation.x, 0, 0.15);
+
+
+                if (drinkTimer > 0.55) {
+                    // Επιστροφή του ποτηριού στο τραπέζι
+                    tableGroup.add(drinkingGlass);
+                    drinkingGlass.position.copy(glassHomePos);
+                    drinkingGlass.rotation.set(0, 0, 0);
+
+
+                    // Επιστροφή του Λόμοφ στη θέση της σκηνής και μείωση των παλμών του
+                    lomovTargetPos.copy(savedLomovPos);
+                    lomovTargetRotY = savedLomovRotY;
+                    setAnxiety(Math.max(20, anxietyLevel - 25));
+                    drinkState = 'none';
+                }
+            }
+        } else {
+            // Κανονική κίνηση χεριών & κεφαλιού Λόμοφ όταν ΔΕΝ πίνει νερό
+            lomov.head.rotation.x = THREE.MathUtils.lerp(lomov.head.rotation.x, 0, 0.1);
+            lomov.head.rotation.z = Math.sin(t * 7) * 0.05 * intensity;
+
+
+            if (currentPose === "handshake") {
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -1.25 + Math.sin(t * 9) * 0.15, 0.12);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, -0.15, 0.12);
+            } else if (currentPose === "grab_and_drink") {
+                // [Τον πιάνει από το μπράτσο]
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -1.15, 0.1);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, -0.2, 0.1);
+            } else if (currentPose === "embrace") {
+                lomov.leftArm.rotation.x = THREE.MathUtils.lerp(lomov.leftArm.rotation.x, -1.1, 0.1);
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -1.1, 0.1);
+            } else {
+                // Όταν έχει ταραχή πιάνει την καρδιά του με το αριστερό χέρι
+                if (anxietyLevel > 65) {
+                    lomov.leftArm.rotation.x = THREE.MathUtils.lerp(lomov.leftArm.rotation.x, -1.15 + Math.sin(t * 10) * 0.08, 0.12);
+                    lomov.leftArm.rotation.z = THREE.MathUtils.lerp(lomov.leftArm.rotation.z, -0.42, 0.12);
+                } else {
+                    lomov.leftArm.rotation.x = THREE.MathUtils.lerp(lomov.leftArm.rotation.x, Math.sin(t * 2) * 0.12, 0.1);
+                    lomov.leftArm.rotation.z = THREE.MathUtils.lerp(lomov.leftArm.rotation.z, 0.08, 0.1);
+                }
+                lomov.rightArm.rotation.x = THREE.MathUtils.lerp(lomov.rightArm.rotation.x, -0.35 + Math.cos(t * 4) * 0.18 * intensity, 0.1);
+                lomov.rightArm.rotation.z = THREE.MathUtils.lerp(lomov.rightArm.rotation.z, -0.08, 0.1);
+            }
+        }
+
+
+        // 4. Θεατρική Κινησιολογία Τσουμπούκοφ ανάλογα με την ατάκα
+        chubukov.body.position.y = 0.9 + Math.sin(t * 2.5) * 0.018;
+        chubukov.body.rotation.z = THREE.MathUtils.lerp(chubukov.body.rotation.z, 0, 0.1);
+
+
+        if (currentPose === "handshake") {
+            // [Του σφίγγει το χέρι]
+            chubukov.rightArm.rotation.x = -1.25 + Math.sin(t * 9) * 0.15;
+            chubukov.rightArm.rotation.z = 0.15;
+            chubukov.leftArm.rotation.x = -0.4;
+            chubukov.leftArm.rotation.z = -0.2;
+        } else if (currentPose === "aside") {
+            // [Από μέσα του] — Συνωμοτική στροφή προς το κοινό
+            chubukov.head.rotation.y = 0.35;
+            chubukov.rightArm.rotation.x = -1.1;
+            chubukov.rightArm.rotation.z = 0.25;
+            chubukov.leftArm.rotation.x = -0.2;
+        } else if (currentPose === "joy_approach") {
+            // [Περιχαρής] — Πλησιάζει με ανοιχτά χέρια!
+            chubukov.leftArm.rotation.x = -1.3 + Math.sin(t * 6) * 0.15;
+            chubukov.rightArm.rotation.x = -1.3 + Math.sin(t * 6) * 0.15;
+            chubukov.leftArm.rotation.z = -0.7;
+            chubukov.rightArm.rotation.z = 0.7;
+        } else if (currentPose === "embrace") {
+            // [Αγκαλιάζει και φιλά τον Λόμοφ... Από τη χαρά μου έχασα την ισορροπία μου!]
+            chubukov.leftArm.rotation.x = -1.45;
+            chubukov.rightArm.rotation.x = -1.45;
+            chubukov.leftArm.rotation.z = 0.35; // Κλείνει την αγκαλιά γύρω από τον Λόμοφ
+            chubukov.rightArm.rotation.z = -0.35;
+            // Φιλιά στα μάγουλα και τρέκλισμα («έχασα την ισορροπία μου»)
+            chubukov.head.rotation.y = Math.sin(t * 6) * 0.35;
+            chubukov.body.rotation.z = Math.sin(t * 4.5) * 0.14;
+        } else if (currentPose === "impatient") {
+            // Χέρια στη μέση με ανυπομονησία
+            chubukov.leftArm.rotation.z = -0.55;
+            chubukov.rightArm.rotation.z = 0.55;
+            chubukov.leftArm.rotation.x = -0.4;
+            chubukov.rightArm.rotation.x = -0.4;
+        } else {
+            chubukov.head.rotation.y = Math.sin(t * 1.5) * 0.12;
+            chubukov.leftArm.rotation.z = THREE.MathUtils.lerp(chubukov.leftArm.rotation.z, -0.22, 0.1);
+            chubukov.rightArm.rotation.z = THREE.MathUtils.lerp(chubukov.rightArm.rotation.z, 0.22, 0.1);
+            chubukov.leftArm.rotation.x = Math.sin(t * 2.2) * 0.12;
+            chubukov.rightArm.rotation.x = -0.45 + Math.cos(t * 3) * 0.15;
+        }
+
+
+        if (workshopMode === 'explore') {
+            for (const id of ['lomov','chubukov']) {
+                const a=id==='lomov'?lomov:chubukov;
+                const act=workshopActions[id];
+                const sitting=act==='sit';
+                a.body.position.y=sitting?.60:THREE.MathUtils.lerp(a.body.position.y,.9,.22);
+                if(sitting) {
+                    a.leftLeg.rotation.x=THREE.MathUtils.lerp(a.leftLeg.rotation.x,-1.1,.2);
+                    a.rightLeg.rotation.x=THREE.MathUtils.lerp(a.rightLeg.rotation.x,-1.1,.2);
+                    a.leftArm.rotation.x=THREE.MathUtils.lerp(a.leftArm.rotation.x,-.25,.2);
+                    a.rightArm.rotation.x=THREE.MathUtils.lerp(a.rightArm.rotation.x,-.25,.2);
+                }
+                else if(act==='reach'||act==='greet') {
+                    a.rightArm.rotation.x=THREE.MathUtils.lerp(a.rightArm.rotation.x,-1.5,.2);
+                    a.rightArm.rotation.z=THREE.MathUtils.lerp(a.rightArm.rotation.z,act==='greet'?.5:0,.2);
+                } else if(act!=='text') {
+                    a.leftArm.rotation.x=THREE.MathUtils.lerp(a.leftArm.rotation.x,0,.2);
+                    a.rightArm.rotation.x=THREE.MathUtils.lerp(a.rightArm.rotation.x,0,.2);
+                    a.leftArm.rotation.z=THREE.MathUtils.lerp(a.leftArm.rotation.z,0,.2);
+                    a.rightArm.rotation.z=THREE.MathUtils.lerp(a.rightArm.rotation.z,0,.2);
+                }
+            }
+        }
+        // 5. Ομαλή κίνηση Κάμερας
+        if (isTransitioningCam) {
+            camera.position.lerp(targetCamPos, 0.06);
+            controls.target.lerp(targetLookAt, 0.06);
+        }
+
+
+        chandelierLight.intensity = 2.15 + Math.sin(t * 8) * 0.06;
+
+
+        workshopRing.position.x = workshopActor().group.position.x;
+        workshopRing.position.z = workshopActor().group.position.z;
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+
+    animate();
+</script>
+</body>
+</html>
